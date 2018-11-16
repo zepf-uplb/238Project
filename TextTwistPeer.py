@@ -60,6 +60,9 @@ class MulticastPingClient(DatagramProtocol):
 		#dictionary for (peerID, score) of all peers including self
 		self.SCOREBOARD = {}
 
+		#use to determine the points to be awarded for certain word (length, score)
+		self.scoring_criteria = {3:1, 4:2, 5:3, 6:4, 7:5, 8:6}
+
 	def datagramReceived(self, datagram, address):
 		peerCall = str(datagram)[2:13]
 		peerID = str(datagram)[13:28]
@@ -126,13 +129,13 @@ class MulticastPingClient(DatagramProtocol):
 
 	def constructGame(self):
 		wordToPlay = dict_list[self.gameID]
-		shuffled = ''.join(sample(wordToPlay, len(wordToPlay)))
-		app.recvMessage(shuffled)
+		shuffled = '-'.join(sample(wordToPlay, len(wordToPlay))).upper()
+		app.setLetters(shuffled)
 		self.constructWords(wordToPlay)		
 		self.gameFace = True
 
 	def constructWords(self, wordToPlay):
-		for L in range(4, len(wordToPlay)+1):
+		for L in range(3, len(wordToPlay)+1):
 		    for subset in combinations(wordToPlay, L):
 		        possible_words = anagram_solver.find_possible("".join(subset))
 		        actual_words = anagram_solver.return_words(possible_words, stuff.word_set)
@@ -154,11 +157,15 @@ class MulticastPingClient(DatagramProtocol):
 
 	def giveVerdict(self, word):
 		if self.word_list[word]:
-			app.recvMessage(word + " already taken")
+			app.recvMessage(word.upper() + " already taken")
 		else:
-			app.recvMessage(word + " accepted")
+			app.recvMessage(word.upper() + " accepted")
 			self.word_list[word] = True
-			self.score += len(word)
+			self.score += self.getWordScore(len(word))
+			app.setScore(self.score)
+
+	def getWordScore(self, wordLength):
+		return self.scoring_criteria[wordLength]
 
 	def initPeerID(self):
 		return randint(100000000000000,999999999999999)
@@ -188,7 +195,9 @@ class MulticastPingClient(DatagramProtocol):
 					#to assure that gameID has been synched with other peers
 					sleep(1)
 
+					app.setPlayerID(str(self.master.peerID))
 					app.recvMessage("Game starting with peerID = " + str(self.master.peerID) + " gameID = " + str(self.master.gameID))
+
 					self.master.constructGame()
 
 				while self.timer < GAME_TIME and self.greenLight:
