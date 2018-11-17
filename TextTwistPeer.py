@@ -197,7 +197,11 @@ class MulticastPingClient(DatagramProtocol):
 			self.clock = [0,0]
 
 		def run(self):
-			while(self.greenLight):
+			while self.greenLight:
+
+				while app is None:
+					sleep(0.01)
+
 				app.recvMessage("\nGame will start in a few moments...\n")
 
 				while self.timer > 0 and self.greenLight and not self.master.gameFace:
@@ -285,6 +289,7 @@ class MulticastPingClient(DatagramProtocol):
 		print("Game Exited")
 		self.t1.greenLight = False
 
+app = None
 peer = MulticastPingClient()
 reactor.listenMulticast(9999, peer, listenMultiple=True)
 #the only code from crochet
