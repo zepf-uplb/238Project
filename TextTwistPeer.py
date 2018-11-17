@@ -12,7 +12,6 @@ from tkinter import Tk
 from operator import itemgetter
 
 WAIT_TIME = 10
-GAME_TIME = 120
 
 class MulticastPingClient(DatagramProtocol):	
 
@@ -62,6 +61,9 @@ class MulticastPingClient(DatagramProtocol):
 
 		#use to determine the points to be awarded for certain word (length, score)
 		self.scoring_criteria = {3:1, 4:2, 5:3, 6:4, 7:5, 8:6}
+
+		self.personal_word_list = []
+
 
 	def datagramReceived(self, datagram, address):
 		peerCall = str(datagram)[2:13]
@@ -163,6 +165,9 @@ class MulticastPingClient(DatagramProtocol):
 			self.word_list[word] = True
 			self.score += self.getWordScore(len(word))
 			app.setScore(self.score)
+			self.personal_word_list.append(word)
+			app.populatePlayerFoundWords(self.personal_word_list)
+
 
 	def getWordScore(self, wordLength):
 		return self.scoring_criteria[wordLength]
@@ -176,6 +181,12 @@ class MulticastPingClient(DatagramProtocol):
 			self.timer = timer
 			self.greenLight = True
 			self.master = master
+
+			#set timer pattern
+			self.pattern = '{0:02d}:{1:02d}'
+
+			self.isTimeRunning = True
+			self.GAME_TIME = [0,0]
 
 		def run(self):
 			while(self.greenLight):
@@ -200,8 +211,9 @@ class MulticastPingClient(DatagramProtocol):
 
 					self.master.constructGame()
 
-				while self.timer < GAME_TIME and self.greenLight:
+				while self.greenLight and self.isTimeRunning:
 					print(self.timer)
+					app.setTimer(self.formatTimer(self.timer))
 					sleep(1)	
 
 					self.master.sendMessage("SYNCHRONIZE", str(self.master.gameID))
@@ -210,7 +222,10 @@ class MulticastPingClient(DatagramProtocol):
 					while len(self.master.SYNC) != len(self.master.PEERS):
 						sleep(.01)
 
-					self.timer += 1					
+					self.timer += 1		
+
+					if self.GAME_TIME[0] == 2:
+						self.isTimeRunning = False			
 
 				if self.greenLight:
 					self.master.gameFace = False
@@ -229,9 +244,29 @@ class MulticastPingClient(DatagramProtocol):
 					self.master.score = 0
 					self.master.SCOREBOARD.clear()
 					self.timer = WAIT_TIME
+					self.GAME_TIME = [0, 0]
+					self.isTimeRunning = True
+					self.master.personal_word_list.clear()
+					app.clearPlayerFoundWords()
+					app.populatePlayerFoundWords(self.master.personal_word_list)
+					app.setScore(0)
+					app.setLetters("E-I-G-H-T-L-E-T")
+					app.setTimer("00:00")
 					self.master.setGame()
 
 					app.recvMessage("\nGame will start again in a few moments...\n")
+
+		def formatTimer(self, time):
+			timeString = None
+			self.GAME_TIME[1] = time
+			if time == 60:
+				self.GAME_TIME[0] += 1
+				self.GAME_TIME[1] = 0
+				self.timer = self.timer - 60
+
+				
+			timeString = self.pattern.format(self.GAME_TIME[0], self.GAME_TIME[1])
+			return timeString
 
 	def exitFxn(self):
 		print("Game Exited")

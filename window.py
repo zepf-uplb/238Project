@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 from threading import Timer
 
 class Window:
@@ -13,9 +14,10 @@ class Window:
 		self.shuffledLet = None
 		self.score = None
 		self.playerID = "#"
+		self.timer = None
 
 		#======================= START: GUI =====================================
-		self.frame = Frame(master, width=1000, height=650, bg=self.mainColor)
+		self.frame = Frame(master, width=1000, height=700, bg=self.mainColor)
 		self.frame.pack(fill="both", expand=True)
 		self.frame.grid_propagate(False)
 		self.frame.grid_rowconfigure(0, weight=1)
@@ -23,28 +25,31 @@ class Window:
 
 		#======================= START: PLAYER INFO =====================
 		self.playerInfoLayout = PanedWindow(self.frame, orient=HORIZONTAL, bg=self.mainColor)
-		self.playerInfoLayout.grid(row=0)
+		self.playerInfoLayout.grid(row=0, sticky="ns", pady=10)
 
-		self.lblPlayerID = Label(self.playerInfoLayout, text="#00000000000000", padx=50)
-		self.playerInfoLayout.add(self.lblPlayerID)
+		Label(self.playerInfoLayout, text="Player ID:", bg=self.mainColor).grid(row=0, column=0, padx=20, sticky="nw")
+		self.lblPlayerID = Label(self.playerInfoLayout, text="#00000000000000", padx=20)
+		self.lblPlayerID.grid(row=1, column=0, padx=20)
 
-		self.lblPlayerScore = Label(self.playerInfoLayout, text="0", padx=50)
-		self.playerInfoLayout.add(self.lblPlayerScore)
+		Label(self.playerInfoLayout, text="Score:", bg=self.mainColor).grid(row=0, column=1, padx=20, sticky="nw")
+		self.lblPlayerScore = Label(self.playerInfoLayout, text="0", padx=20)
+		self.lblPlayerScore.grid(row=1, column=1, padx=20)
 
-		self.lblPlayerTime = Label(self.playerInfoLayout, text="00:00", padx=50)
-		self.playerInfoLayout.add(self.lblPlayerTime)
+		Label(self.playerInfoLayout, text="Time:", bg=self.mainColor).grid(row=0, column=2, padx=20, sticky="nw")
+		self.lblPlayerTime = Label(self.playerInfoLayout, text="00:00", padx=20)
+		self.lblPlayerTime.grid(row=1, column=2, padx=20)
 		#======================= END: PLAYER INFO =======================
 
 		#======================= START: PLAYER FOUND WORDS =====================
 		self.foundWordsLayout = PanedWindow(self.frame, orient=HORIZONTAL, bg=self.mainColor)
-		self.foundWordsLayout.grid(row=1)
-		self.populatePlayerFoundWords(self.foundWordsLayout)
+		self.foundWordsLayout.grid(row=1, pady=5, sticky="ns")
+		# self.populatePlayerFoundWords(self.colours)
 		#======================= END: PLAYER FOUND WORDS =======================
 
 		#======================= START: JUMBLED EIGHT LETTERS ===================
 		self.lblShuffledLet = Label(self.frame, text="E-I-G-H-T-L-E-T", font=("Arial", 20), 
 			padx=15, pady=5, borderwidth=2, relief=SOLID)
-		self.lblShuffledLet.grid(row=2)
+		self.lblShuffledLet.grid(row=2, pady=20, sticky="ns")
 		#======================= END: JUMBLED EIGHT LETTERS =====================
 
 		#======================= START: GAME HISTORY ============================
@@ -70,7 +75,7 @@ class Window:
 
 
 	def setPlayerID(self, playerID):
-		self.playerID = playerID
+		self.playerID = "#"+playerID
 		self.lblPlayerID.config(text=self.playerID)
 
 	def setLetters(self, letters):
@@ -80,6 +85,11 @@ class Window:
 	def setScore(self, score):
 		self.score = score
 		self.lblPlayerScore.config(text=self.score)
+
+	def setTimer(self, timer):
+		self.timer = timer
+		self.lblPlayerTime.config(text=self.timer)
+
 
 	def recvMessage(self, msg):
 		self.text.config(state=NORMAL)
@@ -91,14 +101,21 @@ class Window:
 		if key.keycode == 36:
 			if self.peer.gameFace:
 				message = self.entry.get()
-				if message in self.peer.word_list:
-					if self.peer.word_list[message]:						
-						self.recvMessage(message + " already taken")
-					else:
-						self.peer.sendMessage("CHECK_WORD!", message)
-						Timer(0.2, lambda arg=message: self.peer.giveVerdict(arg)).start()
+
+				if message == "":
+					messagebox.showinfo('VERIFYING YOUR INPUT', "Please enter a word.")
+
 				else:
-					self.recvMessage(message + " rejected")
+					if message in self.peer.word_list:
+						if self.peer.word_list[message]:						
+							# self.recvMessage(message + " already taken")
+							messagebox.showinfo('VERIFYING INPUT', message.upper() + " is already taken.")
+						else:
+							self.peer.sendMessage("CHECK_WORD!", message)
+							Timer(0.2, lambda arg=message: self.peer.giveVerdict(arg)).start()
+					else:
+						# self.recvMessage(message + " rejected")
+						messagebox.showwarning('VERIFYING YOUR INPUT', message.upper() + " is rejected.")
 
 			self.entry.delete(0, len(self.entry.get()))
 
@@ -107,14 +124,23 @@ class Window:
 		message = self.entry.get() + "\n"
 		self.entry.delete(0, len(self.entry.get()))
 
-	def populatePlayerFoundWords(self, container):
+	def populatePlayerFoundWords(self, words):
 		rowNum = 0
 		colNum = 0
-		for c in self.colours:
-		    Label(container, text=c, relief=GROOVE,width=15, padx=3, pady=3, bd=2).grid(row=rowNum,column=colNum, padx=1, pady=1)
+		for c in words:
+		    Label(self.foundWordsLayout, text=c, relief=GROOVE,width=15, padx=3, pady=3, bd=2).grid(row=rowNum,column=colNum, padx=5, pady=2, sticky="w")
 		    colNum = colNum + 1
+		    # rowNum = rowNum + 1
 		    if colNum == 7:
+		    # if rowNum == 5:
 		    	colNum = 0
 		    	rowNum = rowNum + 1
+		    	# rowNum = 0
+		    	# colNum = colNum + 1
+
+	def clearPlayerFoundWords(self):
+		list = self.foundWordsLayout.grid_slaves()
+		for l in list:
+		    l.destroy()
 
 
