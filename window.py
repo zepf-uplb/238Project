@@ -29,9 +29,13 @@ class Window:
 		self.playerInfoLayout = PanedWindow(self.frame, orient=HORIZONTAL, bg=self.mainColor)
 		self.playerInfoLayout.grid(row=0, sticky="ns", pady=10)
 
+		#Label(self.playerInfoLayout, text="Player ID:", bg=self.mainColor).grid(row=0, column=0, padx=20, sticky="nw")
+		#self.lblPlayerID = Label(self.playerInfoLayout, text="#00000000000000", padx=20)
+		#self.lblPlayerID.grid(row=1, column=0, padx=20)
+
 		Label(self.playerInfoLayout, text="Player ID:", bg=self.mainColor).grid(row=0, column=0, padx=20, sticky="nw")
-		self.lblPlayerID = Label(self.playerInfoLayout, text="#00000000000000", padx=20)
-		self.lblPlayerID.grid(row=1, column=0, padx=20)
+		self.lblPlayerName = Label(self.playerInfoLayout, text="N/A", padx=20)
+		self.lblPlayerName.grid(row=1, column=0, padx=20)
 
 		Label(self.playerInfoLayout, text="Score:", bg=self.mainColor).grid(row=0, column=1, padx=20, sticky="nw")
 		self.lblPlayerScore = Label(self.playerInfoLayout, text="0", padx=20)
@@ -79,6 +83,10 @@ class Window:
 	def setPlayerID(self, playerID):
 		self.playerID = "#"+playerID
 		self.lblPlayerID.config(text=self.playerID)
+
+	def setPlayerName(self, playerName):
+		self.playerName = playerName
+		self.lblPlayerName.config(text=self.playerName)
 
 	def setLetters(self, letters):
 		self.shuffledLet= letters

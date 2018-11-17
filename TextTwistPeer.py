@@ -12,13 +12,14 @@ from tkinter import Tk
 from operator import itemgetter
 from math import floor
 
-WAIT_TIME = 10
+WAIT_TIME = 10 #secs
+GAME_TIME = 2 #mins
 
 class MulticastPingClient(DatagramProtocol):	
 
 	def startProtocol(self):
-		#self.name = input("Enter name: ")
-		self.name = "Peer"
+		self.name = input("Enter name: ")		
+		#self.name = "Peer"
 		self.transport.joinGroup("228.0.0.5")
 
 		#15 digit ID of this peer
@@ -190,10 +191,12 @@ class MulticastPingClient(DatagramProtocol):
 			self.pattern = '{0:02d}:{1:02d}'
 
 			self.isTimeRunning = True
-			self.GAME_TIME = [0,0]
+			self.clock = [0,0]
 
 		def run(self):
 			while(self.greenLight):
+				app.recvMessage("\nGame will start in a few moments...\n")
+
 				while self.timer > 0 and self.greenLight and not self.master.gameFace:
 					#print(self.timer)
 					app.setTimer(self.formatTimer(self.timer))
@@ -211,7 +214,8 @@ class MulticastPingClient(DatagramProtocol):
 					#to assure that gameID has been synched with other peers
 					sleep(1)
 
-					app.setPlayerID(str(self.master.peerID))
+					#app.setPlayerID(str(self.master.peerID))
+					#app.setPlayerName(self.master.name)
 					app.recvMessage("Game starting with peerID = " + str(self.master.peerID) + " gameID = " + str(self.master.gameID))
 
 					self.master.constructGame()
@@ -229,7 +233,7 @@ class MulticastPingClient(DatagramProtocol):
 
 					self.timer += 1		
 
-					if self.GAME_TIME[0] == 2:
+					if self.clock[0] == GAME_TIME:
 						self.isTimeRunning = False			
 
 				if self.greenLight:
@@ -244,12 +248,19 @@ class MulticastPingClient(DatagramProtocol):
 
 					sorted_scores = sorted(self.master.SCOREBOARD.items(), key=itemgetter(1), reverse=True)
 
-					app.recvMessage(str(sorted_scores))
+					named_scores = []
+					for (peerID,score) in sorted_scores:
+						if peerID == self.master.peerID:
+							named_scores.append((self.master.name, score)) 
+						else:
+							named_scores.append((self.master.PEERS[peerID], score)) 
+
+					app.recvMessage(str(named_scores))
 
 					self.master.score = 0
 					self.master.SCOREBOARD.clear()
 					self.timer = WAIT_TIME
-					self.GAME_TIME = [0, 0]
+					self.clock = [0, 0]
 					self.isTimeRunning = True
 					self.master.personal_word_list.clear()
 					app.clearPlayerFoundWords()
@@ -259,14 +270,12 @@ class MulticastPingClient(DatagramProtocol):
 					app.setTimer("00:00")
 					self.master.setGame()
 
-					app.recvMessage("\nGame will start again in a few moments...\n")
-
 		def formatTimer(self, time):
 			timeString = None
-			self.GAME_TIME[1] = time%60
-			self.GAME_TIME[0] = floor(time/60)
+			self.clock[1] = time%60
+			self.clock[0] = floor(time/60)
 				
-			timeString = self.pattern.format(self.GAME_TIME[0], self.GAME_TIME[1])
+			timeString = self.pattern.format(self.clock[0], self.clock[1])
 			return timeString
 
 	def exitFxn(self):
@@ -284,6 +293,7 @@ root = Tk()
 root.wm_title("Text Twist Chat Edition")
 
 app = Window(root, peer)
+app.setPlayerName(peer.name)
 root.mainloop()
 
 peer.exitFxn()
