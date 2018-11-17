@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
 from threading import Timer
+from random import  sample
 
 class Window:
 	def __init__(self, master, peer):
@@ -15,6 +16,7 @@ class Window:
 		self.score = None
 		self.playerID = "#"
 		self.timer = None
+		self.messagebox = messagebox
 
 		#======================= START: GUI =====================================
 		self.frame = Frame(master, width=1000, height=700, bg=self.mainColor)
@@ -68,7 +70,7 @@ class Window:
 		self.entry.bind("<Key>", self.onKeyPress)
 		self.entry.grid(row = 1, column = 0, sticky="nsew")
 
-		self.button = Button(self.gameProgressLayout, text="Send", command=self.sendMessage)
+		self.button = Button(self.gameProgressLayout, text="Shuffle", command=self.shuffleWord)
 		self.button.grid(row = 1, column = 1, sticky="nsew")
 		#======================= END: GAME HISTORY ===============================
 		#======================= END: GUI ========================================
@@ -103,44 +105,51 @@ class Window:
 				message = self.entry.get()
 
 				if message == "":
-					messagebox.showinfo('VERIFYING YOUR INPUT', "Please enter a word.")
+					self.messagebox.showinfo('VERIFYING YOUR INPUT', "Please enter a word.")
 
 				else:
 					if message in self.peer.word_list:
 						if self.peer.word_list[message]:						
 							# self.recvMessage(message + " already taken")
-							messagebox.showinfo('VERIFYING INPUT', message.upper() + " is already taken.")
+							if (1,message) not in self.peer.personal_word_list and (0,message) not in self.peer.personal_word_list:
+								self.peer.personal_word_list.append((0,message))
+								self.populatePlayerFoundWords(self.peer.personal_word_list)
+							self.messagebox.showinfo('VERIFYING INPUT', message.upper() + " is already taken.")
+							
 						else:
 							self.peer.sendMessage("CHECK_WORD!", message)
 							Timer(0.2, lambda arg=message: self.peer.giveVerdict(arg)).start()
 					else:
 						# self.recvMessage(message + " rejected")
-						messagebox.showwarning('VERIFYING YOUR INPUT', message.upper() + " is rejected.")
+						self.messagebox.showwarning('VERIFYING YOUR INPUT', message.upper() + " is rejected.")
 
 			self.entry.delete(0, len(self.entry.get()))
 
-	#does really nothing as of now
-	def sendMessage(self):
-		message = self.entry.get() + "\n"
-		self.entry.delete(0, len(self.entry.get()))
+	def shuffleWord(self):
+		wordToPlay = self.lblShuffledLet.cget("text").replace("-", "")
+		shuffled = '-'.join(sample(wordToPlay, len(wordToPlay))).upper()
+		self.lblShuffledLet["text"] = shuffled
 
 	def populatePlayerFoundWords(self, words):
 		rowNum = 0
 		colNum = 0
-		for c in words:
-		    Label(self.foundWordsLayout, text=c, relief=GROOVE,width=15, padx=3, pady=3, bd=2).grid(row=rowNum,column=colNum, padx=5, pady=2, sticky="w")
-		    colNum = colNum + 1
-		    # rowNum = rowNum + 1
-		    if colNum == 7:
-		    # if rowNum == 5:
-		    	colNum = 0
-		    	rowNum = rowNum + 1
-		    	# rowNum = 0
-		    	# colNum = colNum + 1
+		for (n,c) in words:
+			if n==1:
+				Label(self.foundWordsLayout, text=c, relief=GROOVE,width=15, padx=3, pady=3, bd=2, bg="green", fg="white").grid(row=rowNum,column=colNum, padx=5, pady=2, sticky="w")
+			else:
+				Label(self.foundWordsLayout, text=c, relief=GROOVE,width=15, padx=3, pady=3, bd=2, bg="red", fg="white").grid(row=rowNum,column=colNum, padx=5, pady=2, sticky="w")
+			colNum = colNum + 1
+			# rowNum = rowNum + 1
+			if colNum == 7:
+			# if rowNum == 5:
+				colNum = 0
+				rowNum = rowNum + 1
+				# rowNum = 0
+				# colNum = colNum + 1
 
 	def clearPlayerFoundWords(self):
 		list = self.foundWordsLayout.grid_slaves()
 		for l in list:
-		    l.destroy()
+			l.destroy()
 
 

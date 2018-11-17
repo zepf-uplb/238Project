@@ -160,13 +160,16 @@ class MulticastPingClient(DatagramProtocol):
 
 	def giveVerdict(self, word):
 		if self.word_list[word]:
-			app.recvMessage(word.upper() + " already taken")
+			self.personal_word_list.append((0,word))
+			app.populatePlayerFoundWords(self.personal_word_list)
+			#app.recvMessage(word.upper() + " already taken")
+			app.messagebox.showinfo('VERIFYING INPUT', word.upper() + " is already taken.")
 		else:
-			app.recvMessage(word.upper() + " accepted")
+			#app.recvMessage(word.upper() + " accepted")
 			self.word_list[word] = True
 			self.score += self.getWordScore(len(word))
 			app.setScore(self.score)
-			self.personal_word_list.append(word)
+			self.personal_word_list.append((1,word))
 			app.populatePlayerFoundWords(self.personal_word_list)
 
 
@@ -192,7 +195,8 @@ class MulticastPingClient(DatagramProtocol):
 		def run(self):
 			while(self.greenLight):
 				while self.timer > 0 and self.greenLight and not self.master.gameFace:
-					print(self.timer)
+					#print(self.timer)
+					app.setTimer(self.formatTimer(self.timer))
 					sleep(1)	
 
 					self.master.sendMessage("SYNCHRONIZE", str(self.master.gameID))
@@ -213,7 +217,7 @@ class MulticastPingClient(DatagramProtocol):
 					self.master.constructGame()
 
 				while self.greenLight and self.isTimeRunning:
-					print(self.timer)
+					#print(self.timer)
 					app.setTimer(self.formatTimer(self.timer))
 					sleep(1)	
 
@@ -261,8 +265,6 @@ class MulticastPingClient(DatagramProtocol):
 			timeString = None
 			self.GAME_TIME[1] = time%60
 			self.GAME_TIME[0] = floor(time/60)
-
-
 				
 			timeString = self.pattern.format(self.GAME_TIME[0], self.GAME_TIME[1])
 			return timeString
