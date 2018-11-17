@@ -10,6 +10,7 @@ from eight_letter import dict_list
 from itertools import combinations
 from tkinter import Tk
 from operator import itemgetter
+from math import floor
 
 WAIT_TIME = 10
 
@@ -258,11 +259,9 @@ class MulticastPingClient(DatagramProtocol):
 
 		def formatTimer(self, time):
 			timeString = None
-			self.GAME_TIME[1] = time
-			if time == 60:
-				self.GAME_TIME[0] += 1
-				self.GAME_TIME[1] = 0
-				self.timer = self.timer - 60
+			self.GAME_TIME[1] = time%60
+			self.GAME_TIME[0] = floor(time/60)
+
 
 				
 			timeString = self.pattern.format(self.GAME_TIME[0], self.GAME_TIME[1])
