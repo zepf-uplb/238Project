@@ -89,6 +89,9 @@ class MulticastPingClient(DatagramProtocol):
 					self.bossPeer = int(peerID)
 					self.gameID = int(peerLoad)
 
+			elif peerCall == "CHATMESSAGE":
+				app.recvMessage(self.PEERS[peerID] + ": " + peerLoad[1:])
+
 			elif peerCall == "CHECK_WORD!":
 				if not self.word_list[peerLoad]:
 					self.word_list[peerLoad] = True

@@ -115,6 +115,10 @@ class Window:
 				if message == "":
 					self.messagebox.showinfo('VERIFYING YOUR INPUT', "Please enter a word.")
 
+				elif message[0] == "$":
+					self.peer.sendMessage("CHATMESSAGE", message)
+					self.recvMessage(self.peer.name + ": " + message[1:])
+
 				else:
 					if message in self.peer.word_list:
 						if self.peer.word_list[message]:						
@@ -130,6 +134,12 @@ class Window:
 					else:
 						# self.recvMessage(message + " rejected")
 						self.messagebox.showwarning('VERIFYING YOUR INPUT', message.upper() + " is rejected.")
+
+			else:
+				message = self.entry.get()
+				if message[0] == "$":
+					self.peer.sendMessage("CHATMESSAGE", message)
+					self.recvMessage(self.peer.name + ": " + message[1:])
 
 			self.entry.delete(0, len(self.entry.get()))
 
