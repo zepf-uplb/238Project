@@ -110,7 +110,7 @@ class Window:
 	def onKeyPress(self, key):
 		if key.keycode == 36:
 			if self.peer.gameFace:
-				message = self.entry.get()
+				message = self.entry.get().lower()
 
 				if message == "":
 					self.messagebox.showinfo('VERIFYING YOUR INPUT', "Please enter a word.")
